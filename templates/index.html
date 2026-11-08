@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.17.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js"></script>
+  <style>html, body, #map { height: 100%; margin: 0; }</style>
+</head>
+<body>
+<div id="map" style="height: 100%"></div>
+<script type="module">
+   import * as maplibregl from 'https://unpkg.com/maplibre-gl@^6.17.0/dist/maplibre-gl.mjs';
+
+  maplibregl.addProtocol("pmtiles", new pmtiles.Protocol().tile);
+
+  const map = new maplibregl.Map({
+    container: 'map',
+    center: [-71.0, 42.25],   // longitute, latitude
+    zoom: 9,
+    style: {
+      version: 8,
+      sources: {
+      base: { type: "vector", url: "pmtiles://" + location.origin + "/static/MA.pmtiles" }
+      },
+      
+      layers: [
+        { id: "land", type: "background", paint: { "background-color": "#7DA88F" } },
+        { id: "water", type: "fill", source: "base", "source-layer": "water", paint: { "fill-color": "#006994" } }, 
+        { id: "roads", type: "line", source: "base", "source-layer": "roads", paint: { "line-color": "#000000", "line-width": 1} },
+        
+        
+      ]
+    }
+  });
+</script>
+</body>
+</html>
