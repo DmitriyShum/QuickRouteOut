@@ -1,0 +1,72 @@
+<!--
+- CS310 - Group 3
+- Dmitriy Shumkin, Juman Ismael, David Li, Sabrina Berkat
+- Date: 12/21/2026
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.17.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js"></script>
+  <style>html, body, #map { height: 100%; margin: 0; }</style>
+</head>
+<body>
+<div id="map"></div>
+<script type="module">
+  import * as maplibregl from 'https://unpkg.com/maplibre-gl@^6.17.0/dist/maplibre-gl.mjs';
+
+  maplibregl.addProtocol("pmtiles", new pmtiles.Protocol().tile);
+
+  
+  const map = new maplibregl.Map({
+    
+    container: 'map',
+    center: [-71.0, 42.25],   // longitute, latitude
+    zoom: 9,
+    style: {
+      version: 8,
+      // Using the font style 
+      glyphs: "mapbox://fonts/openmaptiles/{fontstack}/{range}.pbf",
+      sources: {
+      base: { type: "vector", url: "pmtiles://" + location.origin + "/static/boston.pmtiles"}, // Put the downloaded pmtiles file into the static folder
+    },
+      
+      layers: [
+        // Style for dryland/grass. Color is the same as Google Maps for water as well.
+        { id: "land", type: "background", paint: { "background-color": "#bbdaa4" } },
+        { id: "water", type: "fill", source: "base", "source-layer": "water", filter: [ "all", ["==", ["geometry-type"], "Polygon"], ["!", ["in", ["get", "kind"], ["literal", ["swimming_pool", "pond", "other", "playa"]]]] ], paint: { "fill-color": "#4a80f5", "fill-antialias": false }},
+        // Road Lines: Highways, main roads streets, railroads, and ferry paths.
+        { id: "roads", type: "line", source: "base", "source-layer": "roads", paint: {"line-color": ["match", ["get", "kind"], "highway", "#669999", "major_road", "#4f5055", "#000000"],"line-width": ["match", ["get", "kind"], "highway", 4, "major_road", 2.5, 1]}},
+        // Names of towns, cities, streets, highways
+        {id: "road-labels", type: "symbol", source: "base", "source-layer": "roads", minzoom: 12, layout: { "symbol-placement": "line", "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11 }, paint: { "text-color": "#222", "text-halo-color": "#fff", "text-halo-width": 1.5 }},
+        // Town and street labels
+        { id: "labels", type: "symbol", source: "base", "source-layer": "places", filter: ["in", ["get", "kind"], ["literal", ["locality", "neighbourhood"]]], layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": ["interpolate", ["linear"], ["zoom"], 8, 11, 12, 16]}, paint: { "text-color": "#000", "text-halo-color": "#fff", "text-halo-width": 2}},
+        // Drawings of buildings
+        { id: "buildings", type: "fill", source: "base", "source-layer": "buildings", minzoom: 13, paint: {"fill-color": "#d9d0c9", "fill-outline-color": "#a89f98"}},
+        //Building names and addresses
+        { id: "address-labels", type: "symbol", source: "base", "source-layer": "buildings", minzoom: 17, filter: ["==", ["get", "kind"], "address"], layout: { "text-field": ["get", "addr_housenumber"], "text-font": ["Noto Sans Regular"], "text-size": 12 } },
+        // Businesses and stores...
+        { id: "store-labels", type: "symbol", source: "base", "source-layer": "pois", minzoom: 17, layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 12 } } 
+      ]
+    }
+  });
+
+  // The map can get your geolocation! Using this API: https://maplibre.org/maplibre-gl-js/docs/API/classes/GeolocateControl/
+map.addControl(new maplibregl.GeolocateControl({
+  positionOptions: {enableHighAccuracy: true},
+  trackUserLocation: true,
+  showUserLocation: true
+}));
+// Add the control to the map.
+map.addControl(geolocate);
+// Set an event listener that fires
+// when an error event occurs.
+geolocate.on("geolocate", e => {
+  const{latitude, longitude} = e.coords;
+});
+</script>
+</body>
+</html>
